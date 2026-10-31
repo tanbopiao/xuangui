@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""axiom-mcp 核心层：回执验签三件套（HMAC + 锚点 + 探针）。
+"""xuangui 核心层：回执验签三件套（HMAC + 锚点 + 探针）。
 
 设计原则（继承 AxiomGate）：
 - 规范化先行：任何字节级花招在规范化面前无效。
@@ -166,7 +166,7 @@ def health_report(key: bytes, expected_anchor: str | None = None) -> dict:
     """体检报告：探针结果 + 证据边界声明。"""
     probes = run_probes(key, expected_anchor=expected_anchor)
     return {
-        "service": "axiom-mcp",
+        "service": "xuangui",
         "version": "0.1.0",
         "probes_total": probes["total"],
         "probes_passed": probes["passed"],

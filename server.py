@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""axiom-mcp 服务器：零依赖的 MCP stdio 服务器（JSON-RPC 2.0）。
+"""xuangui 服务器：零依赖的 MCP stdio 服务器（JSON-RPC 2.0）。
 
 接入方式（任何支持 MCP 的智能体）：
     {"command": "python3", "args": ["<路径>/server.py"], "env": {"AXIOM_KEY": "<密钥hex>"}}
 
 工具清单：
-- trust_verify_receipt   验证一条回执（HMAC + 时间新鲜度 + 外部锚点）
-- trust_run_probes       对本服务跑红队探针组
-- trust_health_report    生成体检报告（含证据边界声明）
+- xuangui_verify_receipt   验证一条回执（HMAC + 时间新鲜度 + 外部锚点）
+- xuangui_run_probes       对本服务跑红队探针组
+- xuangui_health_report    生成体检报告（含证据边界声明）
 
 密钥来源：环境变量 AXIOM_KEY（hex，32 字节=64 个十六进制字符），缺省时使用内置演示密钥并明确标注。
 """
@@ -19,11 +19,11 @@ import sys
 
 from trustgate_core import health_report, make_receipt, run_probes, verify_receipt
 
-SERVER_INFO = {"name": "axiom-mcp", "version": "0.1.0"}
+SERVER_INFO = {"name": "xuangui", "version": "0.1.0"}
 
 TOOLS = [
     {
-        "name": "trust_verify_receipt",
+        "name": "xuangui_verify_receipt",
         "description": "验证回执：HMAC-SHA256 严格验签 + 时间新鲜度 + 外部锚点比对，编码混淆一律拒绝。",
         "inputSchema": {
             "type": "object",
@@ -36,7 +36,7 @@ TOOLS = [
         },
     },
     {
-        "name": "trust_run_probes",
+        "name": "xuangui_run_probes",
         "description": "对本服务密钥跑红队探针组（篡改/编码混淆/嵌套/锚点调包/过期），全部拒绝才算健康。",
         "inputSchema": {
             "type": "object",
@@ -44,12 +44,12 @@ TOOLS = [
         },
     },
     {
-        "name": "trust_health_report",
+        "name": "xuangui_health_report",
         "description": "生成体检报告：探针统计 + 证据边界声明。",
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
-        "name": "trust_make_receipt",
+        "name": "xuangui_make_receipt",
         "description": "签发回执（演示/测试用）：payload + HMAC + 可选锚点。",
         "inputSchema": {
             "type": "object",
@@ -108,10 +108,10 @@ def tool_make_receipt(args: dict) -> dict:
 
 
 HANDLERS = {
-    "trust_verify_receipt": tool_verify_receipt,
-    "trust_run_probes": tool_run_probes,
-    "trust_health_report": tool_health_report,
-    "trust_make_receipt": tool_make_receipt,
+    "xuangui_verify_receipt": tool_verify_receipt,
+    "xuangui_run_probes": tool_run_probes,
+    "xuangui_health_report": tool_health_report,
+    "xuangui_make_receipt": tool_make_receipt,
 }
 
 # ---------- JSON-RPC / MCP 协议层 ----------

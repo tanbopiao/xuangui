@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""axiom-mcp 全量用例：核心层 + 协议层 + 红队探针。零第三方依赖，直接 python3 -m unittest 运行。"""
+"""xuangui 全量用例：核心层 + 协议层 + 红队探针。零第三方依赖，直接 python3 -m unittest 运行。"""
 from __future__ import annotations
 
 import io
@@ -111,17 +111,17 @@ class ProbeTests(unittest.TestCase):
 class ProtocolTests(unittest.TestCase):
     def test_16_initialize_handshake(self):
         resp = rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-        self.assertEqual(resp["result"]["serverInfo"]["name"], "axiom-mcp")
+        self.assertEqual(resp["result"]["serverInfo"]["name"], "xuangui")
 
     def test_17_tools_listed(self):
         resp = rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         names = {t["name"] for t in resp["result"]["tools"]}
-        self.assertTrue({"trust_verify_receipt", "trust_run_probes",
-                         "trust_health_report", "trust_make_receipt"} <= names)
+        self.assertTrue({"xuangui_verify_receipt", "xuangui_run_probes",
+                         "xuangui_health_report", "xuangui_make_receipt"} <= names)
 
     def test_18_make_and_verify_roundtrip_via_tools(self):
         made = rpc({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {
-            "name": "trust_make_receipt",
+            "name": "xuangui_make_receipt",
             "arguments": {"payload": {"k": "v"}, "anchor": ANCHOR}}})
         receipt = json.loads(made["result"]["content"][0]["text"])
         self.assertEqual(receipt["anchor"], ANCHOR)
@@ -143,14 +143,14 @@ class ProtocolTests(unittest.TestCase):
         init = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
         listed = json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         probes = json.dumps({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-                             "params": {"name": "trust_run_probes", "arguments": {}}})
+                             "params": {"name": "xuangui_run_probes", "arguments": {}}})
         script = f"import sys; sys.path.insert(0, {os.path.dirname(os.path.abspath(__file__))!r}); from server import serve; serve()"
         proc = subprocess.run([sys.executable, "-c", script],
                               input="\n".join([init, listed, probes]) + "\n",
                               capture_output=True, text=True, timeout=30)
         lines = [json.loads(l) for l in proc.stdout.strip().splitlines()]
         self.assertEqual(len(lines), 3)
-        self.assertEqual(lines[0]["result"]["serverInfo"]["name"], "axiom-mcp")
+        self.assertEqual(lines[0]["result"]["serverInfo"]["name"], "xuangui")
         probe_result = json.loads(lines[2]["result"]["content"][0]["text"])
         self.assertEqual(probe_result["passed"], probe_result["total"])
 
