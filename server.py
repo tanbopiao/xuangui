@@ -5,9 +5,12 @@
     {"command": "python3", "args": ["<路径>/server.py"], "env": {"AXIOM_KEY": "<密钥hex>"}}
 
 工具清单：
-- xuangui_verify_receipt   验证一条回执（HMAC + 时间新鲜度 + 外部锚点）
-- xuangui_run_probes       对本服务跑红队探针组
-- xuangui_health_report    生成体检报告（含证据边界声明）
+- xuangui_adjudicate        裁决认知种子（三态判定 + 残影剥离 + 不变量提纯）
+- xuangui_bench_adjudicate  多线程裁决基准（并发一致性 + 吞吐）
+- xuangui_verify_receipt    验证一条回执（HMAC + 时间新鲜度 + 外部锚点）
+- xuangui_run_probes        对本服务跑红队探针组
+- xuangui_health_report     生成体检报告（含证据边界声明）
+- xuangui_make_receipt      签发回执（演示/测试）
 
 密钥来源：环境变量 AXIOM_KEY（hex，32 字节=64 个十六进制字符），缺省时使用内置演示密钥并明确标注。
 """
@@ -19,9 +22,35 @@ import sys
 
 from trustgate_core import health_report, make_receipt, run_probes, verify_receipt
 
-SERVER_INFO = {"name": "xuangui", "version": "0.1.0"}
+from verdict import adjudicate, bench_adjudicate
+
+SERVER_INFO = {"name": "xuangui", "version": "0.2.0"}
 
 TOOLS = [
+    {
+        "name": "xuangui_adjudicate",
+        "description": "裁决认知种子：三态判定（ALLOW/DENY/ESCALATE）+ 残影剥离（编码混淆/嵌套包装/键别名）+ 不变量提纯（拓扑/因果/逻辑），提纯度为渐近观测量。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "seed": {"type": "object", "description": "待裁决的认知种子（结构化对象）"},
+            },
+            "required": ["seed"],
+        },
+    },
+    {
+        "name": "xuangui_bench_adjudicate",
+        "description": "多线程裁决基准：并发一致性（无串扰）与吞吐观测。",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "seed": {"type": "object", "description": "基准种子"},
+                "threads": {"type": "integer", "description": "线程数（默认 8）"},
+                "rounds": {"type": "integer", "description": "每线程轮次（默认 100）"},
+            },
+            "required": ["seed"],
+        },
+    },
     {
         "name": "xuangui_verify_receipt",
         "description": "验证回执：HMAC-SHA256 严格验签 + 时间新鲜度 + 外部锚点比对，编码混淆一律拒绝。",
@@ -101,6 +130,20 @@ def tool_health_report(args: dict) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}
 
 
+def tool_adjudicate(args: dict) -> dict:
+    result = adjudicate(args.get("seed", {}))
+    return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}
+
+
+def tool_bench_adjudicate(args: dict) -> dict:
+    result = bench_adjudicate(
+        args.get("seed", {}),
+        threads=int(args.get("threads", 8)),
+        rounds=int(args.get("rounds", 100)),
+    )
+    return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}]}
+
+
 def tool_make_receipt(args: dict) -> dict:
     key, _ = get_key()
     receipt = make_receipt(args.get("payload", {}), key, anchor=args.get("anchor"))
@@ -108,6 +151,8 @@ def tool_make_receipt(args: dict) -> dict:
 
 
 HANDLERS = {
+    "xuangui_adjudicate": tool_adjudicate,
+    "xuangui_bench_adjudicate": tool_bench_adjudicate,
     "xuangui_verify_receipt": tool_verify_receipt,
     "xuangui_run_probes": tool_run_probes,
     "xuangui_health_report": tool_health_report,
